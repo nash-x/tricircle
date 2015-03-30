@@ -664,6 +664,15 @@ class CinderProxy(manager.SchedulerDependentManager):
                 self.db.volume_type_create(
                     context,
                     dict(name=volume_type_name, extra_specs=extraspec))
+            elif not vol_types[volume_type_name]['extra_specs']:
+                # don't replace existed backend, just fill blank extra specs
+                # which made from inconsistent volume type update
+                LOG.debug(_("update extra spec for vol_type:%s"),
+                    vol_types[volume_type_name])
+                extraspec = volumetype._info['extra_specs']
+                vol_type = vol_types[volume_type_name]
+                self.db.volume_type_extra_specs_update_or_create(
+                    context, vol_type['id'], extraspec)
         LOG.debug(_("cascade ino: update volume types finished"))
 
     def _update_volume_qos(self, context, qosSpecs):
@@ -1136,7 +1145,9 @@ class CinderProxy(manager.SchedulerDependentManager):
         """
         LOG.info(_("cascade ino: copy volume to image, image_meta is:%s"),
                  image_meta)
-        force = image_meta.get('force', False)
+        # TODO: make force default as True for now, api should pass this
+        # param down through context here (image_meta doesn't has this param)
+        force = image_meta.get('force', True)
         image_name = image_meta.get("name")
         container_format = image_meta.get("container_format")
         disk_format = image_meta.get("disk_format")

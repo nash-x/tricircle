@@ -3201,7 +3201,6 @@ class ComputeManager(manager.Manager):
             socket_dir = '/var/l2proxysock'
             if not os.path.exists(socket_dir):
                 LOG.debug("socket file is not exist!")
-                raise
             else:
                 retry = 5
                 cas_ports = [cas_port_id["port"]["id"] for cas_port_id in cascaded_ports]
@@ -3217,7 +3216,6 @@ class ComputeManager(manager.Manager):
                     except socket.error:
                         LOG.debug("socket error! continue")
                         sock.close()
-                        raise
                 sock.close()
         except Exception:
             with excutils.save_and_reraise_exception() as ctxt:

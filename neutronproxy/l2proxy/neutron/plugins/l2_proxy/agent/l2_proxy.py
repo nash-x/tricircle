@@ -585,6 +585,15 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
         LOG.debug(_('destroy port, Response:%s'), str(bodyResponse))
         return bodyResponse
 
+    def _get_fixed_ip(self, ports):
+        if len(ports) == 2:
+            return ports[1]
+        elif len(ports) == 3:
+            return ports[2]
+        else:
+            LOG.error('ports is incorrect, ports: %s' % ports)
+            raise ValueError('ports is incorrect, ports: %s' % ports)
+
     def fdb_add(self, context, fdb_entries):
         LOG.debug("fdb_add received")
         for lvm, agent_ports in self.get_agent_ports(fdb_entries,
@@ -606,11 +615,12 @@ class OVSNeutronAgent(n_rpc.RpcCallback,
                         if(const.DEVICE_OWNER_DVR_INTERFACE in port[1]):
                             return
                         ips = mac_ip_map.get(port[0])
+                        fixed_ip_01 = self._get_fixed_ip(port)
                         if(ips):
-                            ips += port[2]
+                            ips += fixed_ip_01
                             mac_ip_map[port[0]] = ips
                         else:
-                            mac_ip_map[port[0]] = [port[2]]
+                            mac_ip_map[port[0]] = [fixed_ip_01]
                     for mac_address, ips in mac_ip_map.items():
                         if(lvm.remote_ports.get(mac_address) or
                            lvm.vif_ports.get(mac_address)):
